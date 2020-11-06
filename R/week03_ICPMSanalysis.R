@@ -4,12 +4,13 @@
 ## Updated 06 November 2020
 
 source("R/week02_fullTidy.R")
-rm(list = setdiff(ls(), c("AA_merged", "ICPMS_merged")))
+rm(list = setdiff(ls(), c("AA_merged", "ICPMS_merged", "dataKey_tidy")))
 
 dataICPMS <- ICPMS_merged %>%
   clean_names("small_camel")
 dataAA <- AA_merged
-rm(list = setdiff(ls(), c("dataAA", "dataICPMS")))
+dataKey <- dataKey_tidy
+rm(list = setdiff(ls(), c("dataAA", "dataICPMS", "dataKey")))
 
 
 # Defining lists for future loops
@@ -48,3 +49,73 @@ for(uniqueMetal in metalsAnalyzed){
 remove(equation, cal, slope, slopeStd, intercept, interceptStd, w, model, uniqueMetal)
 
 
+## I prefer camelCase but that seems to be causing errors. Over to snake_case we go. RIP my environment, you had a good run.
+ICPMS <- dataICPMS %>%
+  clean_names()
+sample_key <- dataKey %>%
+  clean_names()
+ICPMS_cal <- calICPMS %>%
+  clean_names()
+metals_analyzed <- metalsAnalyzed
+sample_sites <- sampleSites
+# Step 4.1: creating a function to analyze the samples
+#inputs: uniqueSite (as a character)
+#outputs: concentration vector
+sample_analysis <- function(unique_site){
+  concentration_data <- NULL
+  for(unique_metal in metals_analyzed){
+    sample <- filter(ICPMS, metal == unique_metal, site == unique_site)
+    data <- NULL
+    
+    for(ID in sample$sample_key){
+      sample_data <- filter(sample, sample_key == ID)
+      cal <- filter(ICPMS_cal, metal == unique_metal)
+      
+      m <- cal$slope
+      b <- cal$intercept
+      y <- sample_data$cps
+      
+      b_e <- cal$intercept_std
+      m_e <- cal$slope_std
+      
+      x <- (y-b)/m
+      
+      RSD <- sample_data$rsd
+      CPS <- sample_data$cps
+      
+      e_yb <- sqrt((RSD)^2 + (b_e)^2)
+      yb <- CPS-b
+      e_x <- x*sqrt((e_yb/yb)^2 + (m_e/m)^2)
+      
+      data <- rbind(data, data_frame(sample_key = ID, x, e_x))
+      
+      if(unique_site != "MB"){
+        concentration_data <- data_frame(sample_key = sample_data$sample_key,
+                                         analyst = sample_data$analyst,
+                                         metal = unique_metal,
+                                         site = unique_site,
+                                         conc_dil = x,
+                                         conc_dil_error = e_x) %>%
+          rbind(concentration_data)
+      }
+    }
+    if(unique_site == "MB"){
+      x <- mean(data$x)
+      e_x <- sd(data$x)
+      concentration_data <- data_frame(metal = unique_metal,
+                                       site = unique_site,
+                                       conc_dil = x,
+                                       conc_dil_error = e_x) %>%
+        rbind(concentration_data)
+    }
+  }
+  return(concentration_data)
+}
+
+
+
+MB <- sample_analysis("MB")
+uncorSample <- runSites(sample_analysis)
+
+MB
+uncorSample
