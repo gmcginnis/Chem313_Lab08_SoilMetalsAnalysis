@@ -112,10 +112,45 @@ sample_analysis <- function(unique_site){
   return(concentration_data)
 }
 
-
-
 MB <- sample_analysis("MB")
-uncorSample <- runSites(sample_analysis)
+uncor_sample <- runSites(sample_analysis)
 
 MB
-uncorSample
+uncor_sample
+
+
+sample_data_mb <- NULL
+
+for(unique_metal in metals_analyzed){
+  MB_metal <- filter(MB, metal == unique_metal)
+  sample_metal <- filter(uncor_sample, metal == unique_metal)
+  conc_dil_blanked <- sample_metal$conc_dil-MB_metal$conc_dil
+  
+  conc_dil_blanked_error <- sqrt(sample_metal$conc_dil_error)^2 + (MB_metal$conc_dil_error)^2
+  
+  sample_data_mb <- sample_metal %>%
+    mutate(conc_dil_blanked, conc_dil_blanked_error) %>%
+    rbind(sample_data_mb)
+}
+
+sample_data_mb
+
+
+#step 8
+vol_e <- 1
+mass_e <- 0.001
+dil_1010_e <- sqrt(1^2 + 10^2)
+dil_e <- sqrt((dil_1010_e/1010)^2 + (1/10)^2) ## error in 101 dilution factor
+
+sample_data <- merge(ICPMS, sample_data_mb) %>%
+  unique()%>%
+  mutate(conc_blanked = conc_dil_blanked * (total_volume/1000)/(mass_of_soil/1000)*101,
+         conc_blanked_error = conc_blanked*
+           sqrt((conc_dil_blanked_error/conc_dil_blanked)^2+
+                  (dil_e/101)^2 +
+                  (mass_e/mass_of_soil)^2 +
+                  (vol_e/total_volume)^2)) %>%
+  select(!c(concentration, type, mass_of_soil, total_volume, cps, rsd, conc_dil_blanked, conc_dil_blanked_error, conc_dil, conc_dil_error))
+
+# purging the environment
+rm(list = ls()[!ls() %in% c("ICPMS", "sample_data")])
