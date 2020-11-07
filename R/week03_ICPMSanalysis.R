@@ -1,4 +1,4 @@
-## Week 03 Data Analysis
+## Week 03 Data Analysis for ICPMS data
 ## Gillian McGinnis
 ## Created 06 November 2020
 ## Updated 06 November 2020
