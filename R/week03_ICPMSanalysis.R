@@ -113,13 +113,26 @@ sample_analysis <- function(unique_site){
   return(concentration_data)
 }
 
+## Step 5: create a function that runs a diff function on ea of the soil sample sites
+
+#inputs: a function
+#outputs: a dataframe with the function outputs from each site
+run_sites <- function(Function){
+  value <- NULL
+  for(sites in sample_sites){
+    site_value <- Function(sites)
+    value <- rbind(site_value, value)
+  }
+  return(value)
+}
+
 MB <- sample_analysis("MB")
-uncor_sample <- runSites(sample_analysis)
+uncor_sample <- run_sites(sample_analysis)
 
 MB
 uncor_sample
 
-
+## Step 7 correct for the MB and perform error prop as needed
 sample_data_mb <- NULL
 
 for(unique_metal in metals_analyzed){
