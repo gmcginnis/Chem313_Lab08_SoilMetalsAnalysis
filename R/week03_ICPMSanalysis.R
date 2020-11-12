@@ -1,7 +1,7 @@
 ## Week 03 Data Analysis for ICPMS data
 ## Gillian McGinnis
 ## Created 06 November 2020
-## Updated 06 November 2020
+## Updated 11 November 2020
 
 source("R/week02_fullTidy.R")
 rm(list = setdiff(ls(), c("AA_merged", "ICPMS_merged", "dataKey_tidy")))
@@ -80,7 +80,8 @@ sample_analysis <- function(unique_site){
       
       x <- (y-b)/m
       
-      RSD <- sample_data$rsd
+      #RSD <- sample_data$rsd
+      RSD <- ((sample_data$rsd/100)*sample_data$cps)
       CPS <- sample_data$cps
       
       e_yb <- sqrt((RSD)^2 + (b_e)^2)
