@@ -17,7 +17,7 @@ dataKey <- dataKey_tidy
 rm(list = setdiff(ls(), c("dataAA", "dataKey")))
 
 ## Creating a list of sample sites by excluding NAs and Method Blanks
-sampleSites <- unique(filter(dataAA, site != "MB", site != "")$site)
+sample_sites <- unique(filter(dataAA, site != "MB", site != "")$site)
 
 ## Changing names back to snake_case
 sample_key <- dataKey %>%
@@ -28,10 +28,12 @@ data_aa <- dataAA %>%
   clean_names() %>%
   mutate(rsd = x_rsd)
 
+## Clearning environ
+remove(dataKey, dataAA)
 
 ## Code based on ICPMS analysis
 # Initiate loop, filter out cal data
-calAA <- NULL
+cal_aa <- NULL
 ## Selecting cal standards
 cal <- data_aa %>%
   filter(type == "CalStd" | type == "CalStd2" | type =="CalStd4") %>%
@@ -64,9 +66,79 @@ ggplot(cal, aes(x = concentration, y = mean_abs))+
   
 ## Back to some given stuff:
 equation <- tibble(metal = slope, slopeStd, intercept, interceptStd)
-calAA <- rbind(calAA, equation)
+cal_aa <- rbind(cal_aa, equation)
 
-remove(equation, cal, slope, slopeStd, intercept, interceptStd, w, model, uniqueMetal)
+remove(equation, cal, slope, slopeStd, intercept, interceptStd, w, model)
 
 
 ## Step 4.1: creating a function to analyze the samples
+#inputs: uniqueSite (as a character)
+#outputs: concentration vector
+sample_analysis <- function(unique_site){
+  concentration_data <- NULL
+  #for(unique_metal in metals_analyzed){
+  sample <- filter(data_aa,
+                     #metal == unique_metal,
+                   site == unique_site)
+  data <- NULL
+  for(ID in sample$sample_key){
+    sample_data <- filter(sample, sample_key == ID)
+      #cal <- filter(calAA, metal == unique_metal)
+    cal <- cal_aa
+      
+    m <- cal$slope
+    b <- cal$intercept
+    y <- sample_data$cps
+      
+    b_e <- cal$intercept_std
+    m_e <- cal$slope_std
+      
+    x <- (y-b)/m
+      
+      #RSD <- sample_data$rsd
+    RSD <- ((sample_data$rsd/100)*sample_data$cps)
+    CPS <- sample_data$cps
+      
+    e_yb <- sqrt((RSD)^2 + (b_e)^2)
+    yb <- CPS-b
+    e_x <- x*sqrt((e_yb/yb)^2 + (m_e/m)^2)
+      
+    data <- rbind(data, data_frame(sample_key = ID, x, e_x))
+      
+    if(unique_site != "MB"){
+      concentration_data <- data_frame(sample_key = sample_data$sample_key,
+                                       analyst = sample_data$analyst,
+                                       #metal = unique_metal,
+                                       site = unique_site,
+                                       conc_dil = x,
+                                       conc_dil_error = e_x) %>%
+        rbind(concentration_data)
+      }
+    }
+  if(unique_site == "MB"){
+      x <- mean(data$x)
+      e_x <- sd(data$x)
+      concentration_data <- data_frame(site = unique_site,
+                                       #metal = unique_metal,
+                                       conc_dil = x,
+                                       conc_dil_error = e_x) %>%
+        rbind(concentration_data)
+    }
+  #} #closing bracket for unique metal if statement
+  return(concentration_data)
+}
+
+run_sites <- function(Function){
+  value <- NULL
+  for(sites in sample_sites){
+    site_value <- Function(sites)
+    value <- rbind(site_value, value)
+  }
+  return(value)
+}
+
+MB <- sample_analysis("MB")
+uncor_sample <- run_sites(sample_analysis)
+
+MB
+uncor_sample
