@@ -9,27 +9,19 @@ source("R/week02_fullTidy.R")
 rm(list = setdiff(ls(), c("AA_merged", "dataKey_tidy")))
 
 ## Adjusting dataframes
-dataAA <- AA_merged %>%
-  mutate(xRsd = as.numeric(as.character(case_when(xRsd != "HIGH" ~ xRsd))))
-dataKey <- dataKey_tidy
-
-## Cleaning environment
-rm(list = setdiff(ls(), c("dataAA", "dataKey")))
-
-## Creating a list of sample sites by excluding NAs and Method Blanks
-sample_sites <- unique(filter(dataAA, site != "MB", site != "")$site)
-
-## Changing names back to snake_case
-sample_key <- dataKey %>%
-  clean_names()
-
-## Chancing names back to snake_case and renaming a variable to match that of other similar dataframes
-data_aa <- dataAA %>%
+data_aa <- AA_merged %>%
+  mutate(xRsd = as.numeric(as.character(case_when(xRsd != "HIGH" ~ xRsd)))) %>%
   clean_names() %>%
   mutate(rsd = x_rsd)
 
-## Clearning environ
-remove(dataKey, dataAA)
+sample_key <- dataKey_tidy %>%
+  clean_names()
+
+## Cleaning environment
+rm(list = setdiff(ls(), c("data_aa", "sample_key")))
+
+## Creating a list of sample sites by excluding NAs and Method Blanks
+sample_sites <- unique(filter(data_aa, site != "MB", site != "")$site)
 
 ## Code based on ICPMS analysis
 # Initiate loop, filter out cal data
@@ -54,6 +46,12 @@ plot(cal$mean_abs ~ cal$concentration,
      ylab = "Counts per second")+
   abline(model, col = "red")+
   title(paste("Calibration for Cr"))
+  
+equation <- tibble(slope, slopeStd, intercept, interceptStd)
+#cal_aa <- rbind(cal_aa, equation)
+cal_aa <- rbind(equation)
+cal_aa
+
 
 ## Alternatively, here's my way.
 myResults <- summary(lm(mean_abs ~ concentration, weights = w, data = cal))
@@ -63,11 +61,8 @@ ggplot(cal, aes(x = concentration, y = mean_abs))+
   geom_smooth(method = "lm", se = FALSE, color = "red")+
   theme_few()+
   labs(x = "Concentration of Cr (ppb)", y = "Counts per second", title = "Calibration curve for Cr")
-  
-## Back to some given stuff:
-equation <- tibble(metal = slope, slopeStd, intercept, interceptStd)
-cal_aa <- rbind(cal_aa, equation)
 
+## Environment clean
 remove(equation, cal, slope, slopeStd, intercept, interceptStd, w, model)
 
 
@@ -84,7 +79,8 @@ sample_analysis <- function(unique_site){
   for(ID in sample$sample_key){
     sample_data <- filter(sample, sample_key == ID)
       #cal <- filter(calAA, metal == unique_metal)
-    cal <- cal_aa
+    cal <- cal_aa %>%
+      clean_names()
       
     m <- cal$slope
     b <- cal$intercept
