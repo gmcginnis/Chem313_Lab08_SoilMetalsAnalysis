@@ -65,26 +65,28 @@ ggplot(cal, aes(x = concentration, y = mean_abs))+
 ## Environment clean
 remove(equation, cal, slope, slopeStd, intercept, interceptStd, w, model)
 
+cal_aa <- cal_aa %>%
+  clean_names()
 
 ## Step 4.1: creating a function to analyze the samples
 #inputs: uniqueSite (as a character)
 #outputs: concentration vector
 sample_analysis <- function(unique_site){
-  concentration_data <- NULL
-  #for(unique_metal in metals_analyzed){
+#unique_site <- "A"  
+concentration_data <- NULL
+#  for(unique_metal in metals_analyzed){
   sample <- filter(data_aa,
                      #metal == unique_metal,
                    site == unique_site)
   data <- NULL
   for(ID in sample$sample_key){
     sample_data <- filter(sample, sample_key == ID)
-      #cal <- filter(calAA, metal == unique_metal)
-    cal <- cal_aa %>%
-      clean_names()
+    #cal <- filter(calAA, metal == unique_metal)
+    cal <- cal_aa
       
     m <- cal$slope
     b <- cal$intercept
-    y <- sample_data$cps
+    y <- sample_data$mean_abs
       
     b_e <- cal$intercept_std
     m_e <- cal$slope_std
@@ -92,11 +94,13 @@ sample_analysis <- function(unique_site){
     x <- (y-b)/m
       
       #RSD <- sample_data$rsd
-    RSD <- ((sample_data$rsd/100)*sample_data$cps)
-    CPS <- sample_data$cps
+    RSD <- ((sample_data$rsd/100)*sample_data$mean_abs)
+    #CPS <- sample_data$cps
+    ABS <- sample_data$mean_abs
       
     e_yb <- sqrt((RSD)^2 + (b_e)^2)
-    yb <- CPS-b
+    #yb <- CPS-b
+    yb <- ABS-b
     e_x <- x*sqrt((e_yb/yb)^2 + (m_e/m)^2)
       
     data <- rbind(data, data_frame(sample_key = ID, x, e_x))
