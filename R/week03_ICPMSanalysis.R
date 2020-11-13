@@ -163,8 +163,15 @@ sample_data <- merge(ICPMS, sample_data_mb) %>%
            sqrt((conc_dil_blanked_error/conc_dil_blanked)^2+
                   (dil_e/101)^2 +
                   (mass_e/mass_of_soil)^2 +
+                  (vol_e/total_volume)^2),
+         conc_unblanked = conc_dil*(total_volume/1000)/(mass_of_soil/1000)*101,
+         conc_unblanked_error = conc_unblanked*
+           sqrt((conc_dil_error/conc_dil)^2+
+                  (dil_e/101)^2 +
+                  (mass_e/mass_of_soil)^2 +
                   (vol_e/total_volume)^2)) %>%
   select(!c(concentration, type, mass_of_soil, total_volume, cps, rsd, conc_dil_blanked, conc_dil_blanked_error, conc_dil, conc_dil_error))
 
 # purging the environment
 rm(list = ls()[!ls() %in% c("ICPMS", "sample_data")])
+view(sample_data)

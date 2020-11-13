@@ -128,6 +128,9 @@ concentration_data <- NULL
   return(concentration_data)
 }
 
+## Step 5: create a function that runs a diff function on ea of the soil sample sites
+# inputs: a function
+# outputs: a dataframe with the function outputs from each site
 run_sites <- function(Function){
   value <- NULL
   for(sites in sample_sites){
@@ -142,3 +145,42 @@ uncor_sample <- run_sites(sample_analysis)
 
 MB
 uncor_sample
+
+
+## Step 7: correct for the MB and perform error prop as needed
+sample_data_mb <- NULL
+
+conc_dil_blanked <- uncor_sample$conc_dil-MB$conc_dil
+conc_dil_blanked_error <- sqrt(uncor_sample$conc_dil_error)^2 + (MB$conc_dil_error)^2
+
+sample_data_mb <- uncor_sample %>%
+  mutate(conc_dil_blanked, conc_dil_blanked_error) %>%
+  rbind(sample_data_mb)
+
+sample_data_mb
+
+
+## step 8: define dilution factors and measurement errors
+vol_e <- 1
+mass_e <- 0.001
+dil_1010_e <- sqrt(1^2 + 10^2)
+dil_e <- sqrt((dil_1010_e/1010)^2 + (1/10)^2) ## error in 101 dilution factor
+
+sample_data <- merge(data_aa, sample_data_mb) %>%
+  unique()%>%
+  mutate(conc_blanked = conc_dil_blanked * (total_volume/1000)/(mass_of_soil/1000),
+         conc_blanked_error = conc_blanked*
+           sqrt((conc_dil_blanked_error/conc_dil_blanked)^2+
+                  (dil_e/101)^2 +
+                  (mass_e/mass_of_soil)^2 +
+                  (vol_e/total_volume)^2),
+         conc_unblanked = conc_dil*(total_volume/1000)/(mass_of_soil/1000),
+         conc_unblanked_error = conc_unblanked*
+           sqrt((conc_dil_error/conc_dil)^2+
+                  (dil_e/101)^2 +
+                  (mass_e/mass_of_soil)^2 +
+                  (vol_e/total_volume)^2)) %>%
+  select(!c(concentration, type, mass_of_soil, total_volume, mean_abs, rsd, conc_dil_blanked, conc_dil_blanked_error, conc_dil, conc_dil_error))
+
+# purging the environment
+#rm(list = ls()[!ls() %in% c("data_aa", "sample_data")])
