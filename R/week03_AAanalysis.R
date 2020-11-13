@@ -183,4 +183,4 @@ sample_data <- merge(data_aa, sample_data_mb) %>%
   select(!c(concentration, type, mass_of_soil, total_volume, mean_abs, rsd, conc_dil_blanked, conc_dil_blanked_error, conc_dil, conc_dil_error))
 
 # purging the environment
-#rm(list = ls()[!ls() %in% c("data_aa", "sample_data")])
+rm(list = ls()[!ls() %in% c("data_aa", "sample_data")])

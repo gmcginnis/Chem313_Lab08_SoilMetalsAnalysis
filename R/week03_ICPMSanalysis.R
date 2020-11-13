@@ -174,4 +174,3 @@ sample_data <- merge(ICPMS, sample_data_mb) %>%
 
 # purging the environment
 rm(list = ls()[!ls() %in% c("ICPMS", "sample_data")])
-view(sample_data)
