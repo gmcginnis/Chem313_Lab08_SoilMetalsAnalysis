@@ -56,11 +56,15 @@ cal_aa
 ## Alternatively, here's my way.
 myResults <- summary(lm(mean_abs ~ concentration, weights = w, data = cal))
 
-ggplot(cal, aes(x = concentration, y = mean_abs))+
-  geom_point(shape = 1)+
+AA_cal_curve <- ggplot(cal, aes(x = concentration, y = mean_abs))+
   geom_smooth(method = "lm", se = FALSE, color = "red")+
-  theme_few()+
+  geom_point(shape = 1)+
+  theme_tufte()+
+  theme(axis.line = element_line("black"),
+        text = element_text("Times", size=12))+
   labs(x = "Concentration of Cr (ppb)", y = "Counts per second", title = "Calibration curve for Cr")
+
+ggsave("AA_cal_curve.png", plot = AA_cal_curve, path = "figures/")
 
 ## Environment clean
 remove(equation, cal, slope, slopeStd, intercept, interceptStd, w, model)

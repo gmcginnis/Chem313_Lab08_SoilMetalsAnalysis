@@ -61,6 +61,28 @@ ggplot(tukey_df, aes(color = label))+
 
 
 ## T-tests
-pairwise.t.test(filtered_AA$conc_blanked, filtered_AA$site)
+paired_t_test <- pairwise.t.test(filtered_AA$conc_blanked, filtered_AA$site) %>%
+  tidy() %>%
+  as.data.frame() %>%
+  mutate(label = case_when(
+    p.value < 0.05 ~ "p < 0.05", # Reject null hypothesiss; diff is significant
+    p.value >= 0.05 ~ "Non-Sig" # Fail to reject null hyp; diff is not significant
+  ))
 
-t.test(conc_blanked ~ site, data=subset(filtered_AA, site %in% c("C", "F")))
+unpaired_t_test <- filtered_AA %>%
+  group_by(site) %>%
+  do(tidy(t.test(.$conc_blanked))) %>%
+  mutate(label = case_when(
+    p.value < 0.05 ~ "p < 0.05", # Reject null hypothesiss; diff is significant
+    p.value >= 0.05 ~ "Non-Sig" # Fail to reject null hyp; diff is not significant
+  ))
+
+# paired_t_test <- filtered_AA %>%
+#   do(tidy(t.test(.$conc_blanked ~ .$site))) %>%
+#   mutate(label = case_when(
+#     p.value < 0.05 ~ "p < 0.05", # Reject null hypothesiss; diff is significant
+#     p.value >= 0.05 ~ "Non-Sig" # Fail to reject null hyp; diff is not significant
+#   ))
+
+stat_test <- filtered_AA %>%
+  t_test(conc_blanked ~ site)
