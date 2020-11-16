@@ -61,6 +61,17 @@ ICPMS_cal_curve <- ggplot(cal_curve, aes(x = concentration, y = cps))+
         text = element_text("Times", size=12))+
   labs(x = "Concentration of Cr (ppb)", y = "Counts per second", title = "ICPMS Calibration curve for Cr")
 
+# cal_curve_ppm <- cal_curve %>%
+#   mutate(concentration_ppm = concentration/1000)
+# 
+# ICPMS_cal_curve <- ggplot(cal_curve_ppm, aes(x = concentration_ppm, y = cps))+
+#   geom_smooth(method = "lm", se = FALSE, color = "red")+
+#   geom_point(shape = 1)+
+#   theme_tufte()+
+#   theme(axis.line = element_line("black"),
+#         text = element_text("Times", size=12))+
+#   labs(x = "Concentration of Cr (ppm)", y = "Counts per second", title = "ICPMS Calibration curve for Cr")
+
 ggsave("ICPMS_cal_curve.png", plot = ICPMS_cal_curve, path = "figures/")
 
 
