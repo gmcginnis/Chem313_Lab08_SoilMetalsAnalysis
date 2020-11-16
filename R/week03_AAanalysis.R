@@ -42,8 +42,8 @@ slopeStd <- summary(model)$coefficients[2,2]
 interceptStd <- summary(model)$coefficients[1,2]
 
 plot(cal$mean_abs ~ cal$concentration,
-     xlab = paste("Concentration of Cr (ppb)"),
-     ylab = "Counts per second")+
+     xlab = paste("Concentration of Cr (ppm)"),
+     ylab = "Absorbance")+
   abline(model, col = "red")+
   title(paste("Calibration for Cr"))
   
@@ -62,7 +62,7 @@ AA_cal_curve <- ggplot(cal, aes(x = concentration, y = mean_abs))+
   theme_tufte()+
   theme(axis.line = element_line("black"),
         text = element_text("Times", size=12))+
-  labs(x = "Concentration of Cr (ppb)", y = "Counts per second", title = "Calibration curve for Cr")
+  labs(x = "Concentration of Cr (ppm)", y = "Absorbance", title = "AA Calibration curve for Cr")
 
 ggsave("AA_cal_curve.png", plot = AA_cal_curve, path = "figures/")
 

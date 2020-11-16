@@ -48,6 +48,21 @@ for(uniqueMetal in metalsAnalyzed){
 
 remove(equation, cal, slope, slopeStd, intercept, interceptStd, w, model, uniqueMetal)
 
+cal_curve <- dataICPMS %>%
+  filter(type == "Cal1" | type == "Cal2" | type =="Cal3") %>%
+  filter(metal == "Cr52") %>% ## has a steeper slope than Cr53
+  select(concentration, cps, rsd, metal)
+
+ICPMS_cal_curve <- ggplot(cal_curve, aes(x = concentration, y = cps))+
+  geom_smooth(method = "lm", se = FALSE, color = "red")+
+  geom_point(shape = 1)+
+  theme_tufte()+
+  theme(axis.line = element_line("black"),
+        text = element_text("Times", size=12))+
+  labs(x = "Concentration of Cr (ppb)", y = "Counts per second", title = "ICPMS Calibration curve for Cr")
+
+ggsave("ICPMS_cal_curve.png", plot = ICPMS_cal_curve, path = "figures/")
+
 
 ## I prefer camelCase but that seems to be causing errors. Over to snake_case we go. RIP my environment, you had a good run.
 ICPMS <- dataICPMS %>%
