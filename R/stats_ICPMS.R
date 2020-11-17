@@ -119,7 +119,50 @@ given_qc <- data.frame(
 stats_qc <- stats_ICPMS %>%
   filter(site == "QC") %>%
   mutate(mass_fraction = mean_conc/1000,
-         mass_fraction_sd = sd_conc/1000)
+         mass_fraction_sd = sd_conc/1000) %>%
+  mutate(metal_short= case_when(
+    metal == "As75" ~ "As",
+    metal == "Cd111" ~ "Cd",
+    metal == "Cd114" ~ "Cd",
+    metal == "Cr52" ~ "Cr",
+    metal == "Cr53" ~ "Cr",
+    metal == "Pb208" ~ "Pb"
+  ))
+
+joining_given <- given_qc %>%
+  rename(metal_short = metal,
+         mass_frac_given = mass_frac,
+         mass_frac_sd_given = mass_frac_sd) %>%
+  select(!mass_frac_sd_given)
+  # rename(metal = metal,
+  #        mass_frac = mass_frac,
+  #        mass_frac_sd = mass_frac_sd)
+
+joining_ICPMS <- stats_qc %>%
+  rename(mass_frac_icpms = mass_fraction,
+         mass_frac_sd_icpms = mass_fraction_sd) %>%
+  select(c(metal, mass_frac_icpms, metal_short))
+  # rename(mass_frac = mass_fraction,
+  #        mass_frac_sd = mass_fraction_sd) %>%
+  # select(c(metal, mass_frac, mass_frac_sd))
+
+joined_qc <- full_join(joining_given, joining_ICPMS) %>%
+  drop_na() %>%
+  mutate(per_recovery = (mass_frac_icpms/mass_frac_given)*100)
+## Df with percent recovery ^
+
+# t_df <- NULL
+# #t_test_function <- function(metals){
+#   tidied <- tidy(t.test(mass_frac ~ metal, data=subset(joined_qc, metal %in% c(metals))), ) %>%
+#     as.data.frame() %>%
+#     mutate(pair = paste(metals, collapse=""))
+#   
+#   t_df <<- rbind(t_df, tidied)
+# #}
+# t_test_function(c("Cd", "Cd111"))
+# metals <- c("Cd", "Cd111")
+# subset_metals <- subset(joined_qc, metal %in% c(metals))
+
 
 ## Stat tests
 sample_sites <- unique(sample_data$site)
