@@ -1,7 +1,7 @@
 ## Week 03 Data Analysis for ICPMS data
 ## Gillian McGinnis
 ## Created 11 November 2020
-## Updated 15 November 2020
+## Updated 16 November 2020
 
 source("R/week03_ICPMSanalysis.R")
 library(broom)
@@ -18,62 +18,104 @@ stats_ICPMS <- sample_data %>%
          lower_ci_ppm = lower_ci/1000,
          upper_ci_ppm = upper_ci/1000)
 
-ICPMS_errors <- sample_data %>%
-  group_by(metal, site) %>%
-  summarize(mean_conc = mean(conc_blanked),
-            sd_conc = sd(conc_blanked),
-            mean_conc_error = mean(conc_blanked_error)) %>%
-  mutate(mean_conc = mean_conc/1000,
-         mean_conc_error = mean_conc_error/1000)
-
-ICPMS_error_prop <- sample_data %>%
-  select(!c(conc_unblanked, conc_unblanked_error)) %>%
-  group_by(site, metal) %>%
-  mutate(numerator = (conc_blanked-conc_blanked_error)^2) %>%
-  summarize(num_sum = sum(numerator)) %>%
-  mutate(n = case_when(
-    site == "A" ~ 4,
-    site == "B" ~ 5,
-    site == "C" ~ 5,
-    site == "D" ~ 3,
-    site == "E" ~ 2,
-    site == "F" ~ 3,
-    site == "QC" ~ 12
-  )) %>%
-  group_by(site,metal) %>%
-  summarize(error_prop = sqrt(num_sum/(n-1))) %>%
-  mutate(error_prop_ppm = error_prop/1000)
-  #mutate(error_prop = sqrt((conc_blanked-conc_blanked_error)^2)/(n-1))
-  # summarize(mean_conc = mean(conc_blanked),
-  #           n_new = n(),
-  #           error_prop = sqrt((conc_blanked-conc_blanked_error)^2)/(n_new-1))
-
-ICPMS_minimal_error_prop <- sample_data %>%
-  mutate(metal_short= case_when(
-    metal == "As75" ~ "As",
-    metal == "Cd111" ~ "Cd",
-    metal == "Cd114" ~ "Cd",
-    metal == "Cr52" ~ "Cr",
-    metal == "Cr53" ~ "Cr",
-    metal == "Pb208" ~ "Pb"
-  )) %>%
-  group_by(metal_short, site) %>%
-  select(!c(conc_unblanked, conc_unblanked_error)) %>%
-  group_by(site, metal_short) %>%
-  mutate(numerator = (conc_blanked-conc_blanked_error)^2) %>%
-  summarize(num_sum = sum(numerator)) %>%
-  mutate(n = case_when(
-    site == "A" ~ 4,
-    site == "B" ~ 5,
-    site == "C" ~ 5,
-    site == "D" ~ 3,
-    site == "E" ~ 2,
-    site == "F" ~ 3,
-    site == "QC" ~ 12
-  )) %>%
-  group_by(site,metal_short) %>%
-  summarize(error_prop = sqrt(num_sum/(n-1))) %>%
-  mutate(error_prop_ppm = error_prop/1000)
+## Error propogation. Unnecessary, as SD's do this already.
+# ICPMS_errors <- sample_data %>%
+#   group_by(metal, site) %>%
+#   summarize(mean_conc = mean(conc_blanked),
+#             sd_conc = sd(conc_blanked),
+#             mean_conc_error = mean(conc_blanked_error)) %>%
+#   mutate(mean_conc = mean_conc/1000,
+#          mean_conc_error = mean_conc_error/1000)
+# 
+# ICPMS_error_prop <- sample_data %>%
+#   select(!c(conc_unblanked, conc_unblanked_error)) %>%
+#   group_by(site, metal) %>%
+#   mutate(numerator = (conc_blanked-conc_blanked_error)^2) %>%
+#   summarize(num_sum = sum(numerator)) %>%
+#   mutate(n = case_when(
+#     site == "A" ~ 4,
+#     site == "B" ~ 5,
+#     site == "C" ~ 5,
+#     site == "D" ~ 3,
+#     site == "E" ~ 2,
+#     site == "F" ~ 3,
+#     site == "QC" ~ 12
+#   )) %>%
+#   group_by(site,metal) %>%
+#   summarize(error_prop = sqrt(num_sum/(n-1))) %>%
+#   mutate(error_prop_ppm = error_prop/1000)
+#   #mutate(error_prop = sqrt((conc_blanked-conc_blanked_error)^2)/(n-1))
+#   # summarize(mean_conc = mean(conc_blanked),
+#   #           n_new = n(),
+#   #           error_prop = sqrt((conc_blanked-conc_blanked_error)^2)/(n_new-1))
+# 
+# ICPMS_error_means <- sample_data %>%
+#   mutate(metal_short= case_when(
+#     metal == "As75" ~ "As",
+#     metal == "Cd111" ~ "Cd",
+#     metal == "Cd114" ~ "Cd",
+#     metal == "Cr52" ~ "Cr",
+#     metal == "Cr53" ~ "Cr",
+#     metal == "Pb208" ~ "Pb"
+#   )) %>%
+#   group_by(metal_short, site) %>%
+#   select(!c(conc_unblanked, conc_unblanked_error)) %>%
+#   group_by(site, metal_short) %>%
+#   summarize(mean = mean(conc_blanked))
+# 
+# ICPMS_minimal_error_prop <- sample_data %>%
+#   mutate(metal_short= case_when(
+#     metal == "As75" ~ "As",
+#     metal == "Cd111" ~ "Cd",
+#     metal == "Cd114" ~ "Cd",
+#     metal == "Cr52" ~ "Cr",
+#     metal == "Cr53" ~ "Cr",
+#     metal == "Pb208" ~ "Pb"
+#   )) %>%
+#   select(!c(conc_unblanked, conc_unblanked_error)) %>%
+#   full_join(ICPMS_error_means) %>%
+#   mutate(numerator = (conc_blanked-mean)^2) %>%
+#   group_by(site,metal_short) %>%
+#   summarize(num_sum = sum(numerator)) %>%
+#   mutate(n = case_when(
+#     site == "A" ~ 4,
+#     site == "B" ~ 5,
+#     site == "C" ~ 5,
+#     site == "D" ~ 3,
+#     site == "E" ~ 2,
+#     site == "F" ~ 3,
+#     site == "QC" ~ 12
+#   )) %>%
+#   group_by(site,metal_short) %>%
+#   summarize(error_prop = sqrt(num_sum/(n-1))) %>%
+#   mutate(error_prop_ppm = error_prop/1000)
+# 
+# # ICPMS_minimal_error_prop <- sample_data %>%
+# #   mutate(metal_short= case_when(
+# #     metal == "As75" ~ "As",
+# #     metal == "Cd111" ~ "Cd",
+# #     metal == "Cd114" ~ "Cd",
+# #     metal == "Cr52" ~ "Cr",
+# #     metal == "Cr53" ~ "Cr",
+# #     metal == "Pb208" ~ "Pb"
+# #   )) %>%
+# #   group_by(metal_short, site) %>%
+# #   select(!c(conc_unblanked, conc_unblanked_error)) %>%
+# #   group_by(site, metal_short) %>%
+# #   mutate(numerator = (conc_blanked-conc_blanked_error)^2) %>%
+# #   summarize(num_sum = sum(numerator)) %>%
+# #   mutate(n = case_when(
+# #     site == "A" ~ 4,
+# #     site == "B" ~ 5,
+# #     site == "C" ~ 5,
+# #     site == "D" ~ 3,
+# #     site == "E" ~ 2,
+# #     site == "F" ~ 3,
+# #     site == "QC" ~ 12
+# #   )) %>%
+# #   group_by(site,metal_short) %>%
+# #   summarize(error_prop = sqrt(num_sum/(n-1))) %>%
+# #   mutate(error_prop_ppm = error_prop/1000)
 
 minimal_stats_ICPMS <- sample_data %>%
   mutate(metal_short= case_when(

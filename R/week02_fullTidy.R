@@ -71,6 +71,6 @@ AA_merged <- dataMerged %>%
   drop_na(meanAbs)
 
 ## Quick plot to check
-ggplot(AA_merged, aes(x = meanAbs, y = concentration))+
+ggplot(AA_merged, aes(x = concentration, y = meanAbs))+
   geom_point()+
   stat_smooth(method = "lm")

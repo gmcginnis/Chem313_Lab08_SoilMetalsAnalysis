@@ -1,7 +1,7 @@
 ## Week 03 Data Analysis for AA data
 ## Gillian McGinnis
 ## Created 11 November 2020
-## Updated 15 November 2020
+## Updated 16 November 2020
 
 source("R/week03_AAanalysis.R")
 ##units: ppm
@@ -18,25 +18,48 @@ stats_AA <- sample_data %>%
 
 #remove(sample_data)
 
-stats_AA_error <- sample_data %>%
-  group_by(site) %>%
-  mutate(numerator = (conc_blanked-conc_blanked_error)^2) %>%
-  drop_na(numerator) %>%
-  summarize(num_sum = sum(numerator)) %>%
-  mutate(n = case_when(
-    site == "A" ~ 4,
-    site == "B" ~ 5,
-    site == "C" ~ 5,
-    site == "D" ~ 3,
-    site == "E" ~ 2,
-    site == "F" ~ 3,
-    site == "QC" ~ 12
-  )) %>%
-  group_by(site) %>%
-  summarize(error_prop = sqrt(num_sum/(n-1)))
-
-all_AA_stats <- full_join(stats_AA, stats_AA_error) %>%
-  select(site, metal_short, mean_ppm, sd_ppm, error_prop_ppm)
+# ## unnecessary error prop
+# AA_error_means <- sample_data %>%
+#   group_by(site) %>%
+#   summarize(mean = mean(conc_blanked))
+# 
+# stats_AA_error <- sample_data %>%
+#   full_join(AA_error_means) %>%
+#   group_by(site) %>%
+#   mutate(numerator = (conc_blanked-mean)^2) %>%
+#   #drop_na(numerator) %>%
+#   summarize(num_sum = sum(numerator)) %>%
+#   mutate(n = case_when(
+#     site == "A" ~ 4,
+#     site == "B" ~ 5,
+#     site == "C" ~ 5,
+#     site == "D" ~ 3,
+#     site == "E" ~ 2,
+#     site == "F" ~ 3,
+#     site == "QC" ~ 12
+#   )) %>%
+#   group_by(site) %>%
+#   summarize(error_prop = sqrt(num_sum/(n-1)))
+# 
+# # stats_AA_error <- sample_data %>%
+# #   group_by(site) %>%
+# #   mutate(numerator = (conc_blanked-conc_blanked_error)^2) %>%
+# #   drop_na(numerator) %>%
+# #   summarize(num_sum = sum(numerator)) %>%
+# #   mutate(n = case_when(
+# #     site == "A" ~ 4,
+# #     site == "B" ~ 5,
+# #     site == "C" ~ 5,
+# #     site == "D" ~ 3,
+# #     site == "E" ~ 2,
+# #     site == "F" ~ 3,
+# #     site == "QC" ~ 12
+# #   )) %>%
+# #   group_by(site) %>%
+# #   summarize(error_prop = sqrt(num_sum/(n-1)))
+# 
+# all_AA_stats <- full_join(stats_AA, stats_AA_error) %>%
+#   select(site, metal_short, mean_ppm, sd_ppm, error_prop_ppm)
 
 
 
